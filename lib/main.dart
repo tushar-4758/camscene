@@ -37,14 +37,12 @@ class CamSceneApp extends StatelessWidget {
             elevation: 0,
             centerTitle: false,
           ),
-          cardTheme: widget(
-            child: CardTheme(
-              color: const Color(0xFF1B1B1D),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              margin: EdgeInsets.zero,
+          cardTheme: CardThemeData(
+            color: const Color(0xFF1B1B1D),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
+            margin: EdgeInsets.zero,
           ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
