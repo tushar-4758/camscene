@@ -60,7 +60,7 @@ class CamSceneApp extends StatelessWidget {
               side: const BorderSide(color: Color(0xFF3A3A3D)),
               minimumSize: const Size(double.infinity, 54),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(20),
               ),
             ),
           ),
