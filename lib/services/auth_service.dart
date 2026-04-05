@@ -21,7 +21,7 @@ class AuthService {
       'email',
       'https://www.googleapis.com/auth/drive',
     ],
-    serverClientId: 'PASTE_WEB_CLIENT_ID_HERE.apps.googleusercontent.com',
+    serverClientId: '222021084955-e2g5lqfq8hvq1vo8vli1sgqg453rlkfj.apps.googleusercontent.com',
   );
 
   static Future<GoogleSignInAccount?> signIn() async {
