@@ -11,6 +11,39 @@ import 'manage_links_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  void openManageLinks(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ManageLinksScreen(),
+      ),
+    );
+  }
+
+  Future<void> confirmReset(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Reset uploads?'),
+        content: const Text('This will clear all captured photos.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Reset'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      context.read<UploadProvider>().resetAll();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
@@ -52,15 +85,19 @@ class HomeScreen extends StatelessWidget {
                 photoUrl: auth.photoUrl,
                 onLogout: () => auth.signOut(),
               ),
+
               const SizedBox(height: 24),
 
               if (selected != null)
                 _SelectedFolderCard(
                   name: selected.name,
                   isVerified: selected.isVerified,
+                  onTap: () => openManageLinks(context),
                 )
               else
-                const _NoFolderCard(),
+                _NoFolderCard(
+                  onTap: () => openManageLinks(context),
+                ),
 
               const SizedBox(height: 16),
 
@@ -81,16 +118,14 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
+
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () {
-                    context.read<UploadProvider>().resetAll();
-                  },
-                  child: const Text("Refresh"),
+                  onPressed: () => confirmReset(context),
+                  child: const Text('Refresh'),
                 ),
               ),
-
 
               const Spacer(),
 
@@ -123,14 +158,7 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 12),
 
               OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const ManageLinksScreen(),
-                    ),
-                  );
-                },
+                onPressed: () => openManageLinks(context),
                 icon: const Icon(Icons.folder_open_rounded),
                 label: const Text('Manage Drive Links'),
               ),
@@ -249,7 +277,8 @@ class _Header extends StatelessWidget {
             backgroundImage: photoUrl != null ? NetworkImage(photoUrl!) : null,
             backgroundColor: const Color(0xFF000000),
             child: photoUrl == null
-                ? const Icon(CupertinoIcons.person_circle ,color: Colors.white)
+                ? const Icon(CupertinoIcons.person_circle,
+                color: Colors.white)
                 : null,
           ),
         ),
@@ -261,59 +290,65 @@ class _Header extends StatelessWidget {
 class _SelectedFolderCard extends StatelessWidget {
   final String name;
   final bool isVerified;
+  final VoidCallback onTap;
 
   const _SelectedFolderCard({
     required this.name,
     required this.isVerified,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(Icons.folder_rounded, color: Colors.white),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+    return InkWell(
+      onTap: onTap,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
                   color: Colors.black,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.folder_rounded, color: Colors.white),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
                 ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: isVerified
-                    ? const Color(0xFFEAF9EE)
-                    : const Color(0xFFFFEEEE),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: Text(
-                isVerified ? 'Verified' : 'Unknown',
-                style: TextStyle(
-                  color: isVerified ? Colors.green : Colors.red,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+              Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isVerified
+                      ? const Color(0xFFEAF9EE)
+                      : const Color(0xFFFFEEEE),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Text(
+                  isVerified ? 'Verified' : 'Unknown',
+                  style: TextStyle(
+                    color: isVerified ? Colors.green : Colors.red,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -321,24 +356,29 @@ class _SelectedFolderCard extends StatelessWidget {
 }
 
 class _NoFolderCard extends StatelessWidget {
-  const _NoFolderCard();
+  final VoidCallback onTap;
+
+  const _NoFolderCard({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Row(
-          children: const [
-            Icon(Icons.folder_off_rounded, color: Colors.black54),
-            SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'No folder selected',
-                style: TextStyle(color: Colors.black),
+    return InkWell(
+      onTap: onTap,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            children: const [
+              Icon(Icons.folder_off_rounded, color: Colors.black54),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'No folder selected',
+                  style: TextStyle(color: Colors.black),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
