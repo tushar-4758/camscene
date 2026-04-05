@@ -1,7 +1,7 @@
 import 'dart:io';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -16,101 +16,89 @@ class CameraScreen extends StatefulWidget {
   State<CameraScreen> createState() => _CameraScreenState();
 }
 
-class _CameraScreenState extends State<CameraScreen>
-    with WidgetsBindingObserver {
+class _CameraScreenState extends State<CameraScreen> {
   CameraController? _controller;
   bool _capturing = false;
-  bool _showFlash = false;
-  int _camIndex = 0;
+  bool _submitting = false;
+  int _cameraIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     _initCamera();
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _controller?.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (_controller == null || !_controller!.value.isInitialized) return;
-    if (state == AppLifecycleState.inactive) {
-      _controller?.dispose();
-      _controller = null;
-    } else if (state == AppLifecycleState.resumed) {
-      _initCamera();
-    }
   }
 
   Future<void> _initCamera() async {
     if (cameras.isEmpty) return;
 
     _controller = CameraController(
-      cameras[_camIndex],
-      ResolutionPreset.high,
+      cameras[_cameraIndex],
+      ResolutionPreset.medium,
       enableAudio: false,
     );
 
-    try {
-      await _controller!.initialize();
-      if (mounted) setState(() {});
-    } catch (e) {
-      debugPrint('Camera init error: $e');
-    }
+    await _controller!.initialize();
+    if (mounted) setState(() {});
   }
 
   Future<void> _switchCamera() async {
     if (cameras.length < 2) return;
-    _camIndex = (_camIndex + 1) % cameras.length;
+    _cameraIndex = (_cameraIndex + 1) % cameras.length;
     await _controller?.dispose();
     await _initCamera();
   }
 
-  Future<void> _capture() async {
+  Future<void> _capturePhoto() async {
+    final uploads = context.read<UploadProvider>();
+    final folderId = context.read<LinksProvider>().activeLink?.folderId;
+
     if (_controller == null ||
         !_controller!.value.isInitialized ||
-        _capturing) return;
+        _capturing ||
+        folderId == null) {
+      return;
+    }
 
-    final folderId = context.read<LinksProvider>().activeLink?.folderId;
-    if (folderId == null) return;
+    if (uploads.pendingCount >= 15) {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          backgroundColor: const Color(0xFF1B1B1D),
+          title: const Text('Please wait', style: TextStyle(color: Colors.white)),
+          content: Text(
+            'Your last ${uploads.pendingCount} photos are not uploaded yet. Please wait a few seconds before capturing more.',
+            style: const TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
 
     setState(() => _capturing = true);
 
     try {
       final xFile = await _controller!.takePicture();
 
-      // Save to temp dir only
       final tempDir = await getTemporaryDirectory();
-      final tempPath =
-          '${tempDir.path}/IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final file = File(
+        '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg',
+      );
 
-      await File(xFile.path).copy(tempPath);
+      await File(xFile.path).copy(file.path);
 
-      // Delete original camera file
       try {
         await File(xFile.path).delete();
       } catch (_) {}
 
-      // Flash animation
-      setState(() => _showFlash = true);
-      await Future.delayed(const Duration(milliseconds: 80));
-      if (mounted) setState(() => _showFlash = false);
+      uploads.addCapturedPhoto(file.path);
 
-      HapticFeedback.mediumImpact();
-
-      // Upload to Drive and delete temp file
-      if (mounted) {
-        context.read<UploadProvider>().addAndUpload(
-          path: tempPath,
-          folderId: folderId,
-        );
-      }
+      await uploads.triggerRollingUpload(folderId);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -122,127 +110,240 @@ class _CameraScreenState extends State<CameraScreen>
     if (mounted) setState(() => _capturing = false);
   }
 
+  Future<void> _submitAll() async {
+    final folderId = context.read<LinksProvider>().activeLink?.folderId;
+    if (folderId == null) return;
+
+    final uploads = context.read<UploadProvider>();
+    if (!uploads.hasItems) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No photos captured')),
+      );
+      return;
+    }
+
+    setState(() => _submitting = true);
+    await uploads.submitAll(folderId);
+
+    if (mounted) {
+      setState(() => _submitting = false);
+
+      final failed = uploads.failedCount;
+      final success = uploads.successCount;
+      final total = uploads.total;
+
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          backgroundColor: const Color(0xFF1B1B1D),
+          title: const Text('Upload Summary', style: TextStyle(color: Colors.white)),
+          content: Text(
+            'Captured: $total\nUploaded: $success\nFailed: $failed',
+            style: const TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            if (failed > 0)
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await uploads.retryFailed(folderId);
+                },
+                child: const Text('Retry Failed'),
+              ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                if (failed == 0) {
+                  uploads.clearCompleted();
+                  Navigator.pop(context);
+                }
+              },
+              child: Text(failed == 0 ? 'Done' : 'Close'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final uploads = context.watch<UploadProvider>();
-    final cs = Theme.of(context).colorScheme;
-    final isReady =
-        _controller != null && _controller!.value.isInitialized;
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(
-        fit: StackFit.expand,
+      body: _controller == null || !_controller!.value.isInitialized
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
+          : Stack(
         children: [
-          // Camera preview
-          if (isReady)
-            Center(
-              child: AspectRatio(
-                aspectRatio: 1 / _controller!.value.aspectRatio,
-                child: CameraPreview(_controller!),
-              ),
-            )
-          else
-            const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
+          Positioned.fill(
+            child: CameraPreview(_controller!),
+          ),
 
-          // Flash effect
-          if (_showFlash) Container(color: Colors.white70),
-
-          // Top bar
           Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            left: 8,
-            right: 8,
+            top: 50,
+            left: 16,
+            right: 16,
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
                   onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
                 ),
                 const Spacer(),
-                // Upload badge
-                if (uploads.hasItems)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: uploads.failedCount > 0
-                          ? Colors.red
-                          : cs.primary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (uploads.isUploading)
-                          const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        else
-                          const Icon(Icons.cloud_done,
-                              color: Colors.white, size: 16),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${uploads.successCount}/${uploads.total}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                _TopBadge(
+                  label: '${uploads.total}',
+                  title: 'Captured',
+                  bg: const Color(0xAA2A2A2E),
+                ),
+                const SizedBox(width: 10),
+                _TopBadge(
+                  label: '${uploads.successCount}',
+                  title: 'Uploaded',
+                  bg: const Color(0xAA17351A),
+                  textColor: const Color(0xFF79FF8B),
+                ),
+                const SizedBox(width: 10),
+                TextButton(
+                  onPressed: _submitting ? null : _submitAll,
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                const Spacer(),
-                // Switch camera
-                IconButton(
-                  icon: const Icon(Icons.flip_camera_android,
-                      color: Colors.white),
-                  onPressed: _switchCamera,
+                  child: _submitting
+                      ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                      : const Text(
+                    'Submit',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ],
             ),
           ),
 
-          // Bottom controls
+          if (uploads.pendingCount > 0)
+            Positioned(
+              top: 118,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: const Color(0xAA2A2A2E),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Text(
+                  'Pending ${uploads.pendingCount}',
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+
           Positioned(
             bottom: 40,
             left: 0,
             right: 0,
             child: Column(
               children: [
-                Text(
-                  uploads.hasItems
-                      ? 'Uploading to Drive...'
-                      : 'Tap to capture',
-                  style: const TextStyle(color: Colors.white70),
-                ),
-                const SizedBox(height: 20),
-                GestureDetector(
-                  onTap: _capture,
-                  child: Container(
-                    width: 80,
-                    height: 80,
+                if (uploads.pendingCount >= 10)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 4),
+                      color: Colors.black87,
+                      borderRadius: BorderRadius.circular(18),
                     ),
-                    child: Container(
-                      margin: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _capturing ? Colors.grey : Colors.white,
-                      ),
+                    child: Text(
+                      'Please wait... pending uploads: ${uploads.pendingCount}',
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    IconButton(
+                      onPressed: _switchCamera,
+                      icon: const Icon(Icons.flip_camera_android, color: Colors.white, size: 30),
+                    ),
+                    GestureDetector(
+                      onTap: _capturing ? null : _capturePhoto,
+                      child: Container(
+                        width: 82,
+                        height: 82,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 4),
+                        ),
+                        child: Container(
+                          margin: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _capturing ? Colors.grey : Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 40),
+                  ],
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TopBadge extends StatelessWidget {
+  final String label;
+  final String title;
+  final Color bg;
+  final Color textColor;
+
+  const _TopBadge({
+    required this.label,
+    required this.title,
+    required this.bg,
+    this.textColor = Colors.white,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: textColor,
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+            ),
+          ),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 10,
             ),
           ),
         ],

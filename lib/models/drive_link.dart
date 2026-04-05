@@ -6,6 +6,7 @@ class DriveLink {
   String url;
   String folderId;
   bool isSelected;
+  bool isVerified;
 
   DriveLink({
     required this.id,
@@ -13,6 +14,7 @@ class DriveLink {
     required this.url,
     required this.folderId,
     this.isSelected = false,
+    this.isVerified = false,
   });
 
   static String? extractFolderId(String input) {
@@ -37,6 +39,7 @@ class DriveLink {
     'url': url,
     'folderId': folderId,
     'isSelected': isSelected,
+    'isVerified': isVerified,
   };
 
   factory DriveLink.fromJson(Map<String, dynamic> json) => DriveLink(
@@ -45,6 +48,7 @@ class DriveLink {
     url: json['url'],
     folderId: json['folderId'],
     isSelected: json['isSelected'] ?? false,
+    isVerified: json['isVerified'] ?? false,
   );
 
   static String encodeList(List<DriveLink> links) {

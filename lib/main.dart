@@ -1,3 +1,4 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -6,7 +7,11 @@ import 'providers/links_provider.dart';
 import 'providers/upload_provider.dart';
 import 'screens/home_screen.dart';
 
-void main() {
+List<CameraDescription> cameras = [];
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  cameras = await availableCameras();
   runApp(const CamSceneApp());
 }
 
@@ -23,7 +28,7 @@ class CamSceneApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Camscene',
+        title: 'CamScene',
         theme: ThemeData(
           brightness: Brightness.dark,
           scaffoldBackgroundColor: const Color(0xFF0F0F10),
@@ -60,7 +65,7 @@ class CamSceneApp extends StatelessWidget {
               side: const BorderSide(color: Color(0xFF3A3A3D)),
               minimumSize: const Size(double.infinity, 54),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(18),
               ),
             ),
           ),

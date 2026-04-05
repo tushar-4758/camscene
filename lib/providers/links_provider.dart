@@ -6,87 +6,88 @@ import '../models/drive_link.dart';
 
 class LinksProvider extends ChangeNotifier {
   final List<DriveLink> _links = [];
-  static const String _key = 'Camscene_links';
+  static const String _storageKey = 'drive_links';
   final Uuid _uuid = const Uuid();
 
   List<DriveLink> get links => List.unmodifiable(_links);
 
   DriveLink? get activeLink {
     try {
-      return _links.firstWhere((l) => l.isSelected);
+      return _links.firstWhere((link) => link.isSelected);
     } catch (_) {
       return null;
     }
   }
 
   LinksProvider() {
-    _load();
+    loadLinks();
   }
 
-  Future<void> _load() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final data = prefs.getString(_key);
-      if (data != null && data.isNotEmpty) {
-        _links.clear();
-        _links.addAll(DriveLink.decodeList(data));
-        notifyListeners();
-      }
-    } catch (e) {
-      debugPrint('Load links error: $e');
+  Future<void> loadLinks() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString(_storageKey);
+    if (data != null && data.isNotEmpty) {
+      _links.clear();
+      _links.addAll(DriveLink.decodeList(data));
+      notifyListeners();
     }
   }
 
   Future<void> _save() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, DriveLink.encodeList(_links));
+    await prefs.setString(_storageKey, DriveLink.encodeList(_links));
   }
 
   Future<void> addLink({
     required String name,
     required String url,
+    required bool isVerified,
   }) async {
     final folderId = DriveLink.extractFolderId(url);
     if (folderId == null) throw Exception('Invalid Drive folder link');
 
-    _links.add(DriveLink(
-      id: _uuid.v4(),
-      name: name.trim(),
-      url: url.trim(),
-      folderId: folderId,
-      isSelected: _links.isEmpty,
-    ));
+    _links.add(
+      DriveLink(
+        id: _uuid.v4(),
+        name: name,
+        url: url,
+        folderId: folderId,
+        isSelected: _links.isEmpty,
+        isVerified: isVerified,
+      ),
+    );
 
     await _save();
     notifyListeners();
   }
 
-  Future<void> updateLink({
-    required String id,
+  Future<void> addCreatedFolder({
     required String name,
-    required String url,
+    required String folderId,
   }) async {
-    final folderId = DriveLink.extractFolderId(url);
-    if (folderId == null) throw Exception('Invalid Drive folder link');
-
-    final index = _links.indexWhere((l) => l.id == id);
-    if (index == -1) return;
-
-    _links[index]
-      ..name = name.trim()
-      ..url = url.trim()
-      ..folderId = folderId;
+    _links.add(
+      DriveLink(
+        id: _uuid.v4(),
+        name: name,
+        url: folderId,
+        folderId: folderId,
+        isSelected: _links.isEmpty,
+        isVerified: true,
+      ),
+    );
 
     await _save();
     notifyListeners();
   }
 
   Future<void> deleteLink(String id) async {
-    final wasSelected = _links.any((l) => l.id == id && l.isSelected);
-    _links.removeWhere((l) => l.id == id);
+    final wasSelected = _links.any((e) => e.id == id && e.isSelected);
+    _links.removeWhere((e) => e.id == id);
+
     if (wasSelected && _links.isNotEmpty) {
       _links.first.isSelected = true;
     }
+
     await _save();
     notifyListeners();
   }

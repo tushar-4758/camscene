@@ -17,17 +17,16 @@ class _AuthClient extends http.BaseClient {
 
 class AuthService {
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: [
+    scopes: const [
       'email',
       'https://www.googleapis.com/auth/drive',
     ],
-    serverClientId:
-    '222021084955-e2g5lqfq8hvq1vo8vli1sgqg453rlkfj.apps.googleusercontent.com',
+    serverClientId: 'PASTE_WEB_CLIENT_ID_HERE.apps.googleusercontent.com',
   );
 
   static Future<GoogleSignInAccount?> signIn() async {
     try {
-      await _googleSignIn.signOut(); // fresh sign-in
+      await _googleSignIn.signOut();
       final user = await _googleSignIn.signIn();
       debugPrint('Signed in user: ${user?.email}');
       return user;
@@ -40,7 +39,6 @@ class AuthService {
   static Future<GoogleSignInAccount?> silentSignIn() async {
     try {
       final user = await _googleSignIn.signInSilently();
-      debugPrint('Silent sign in user: ${user?.email}');
       return user;
     } catch (e) {
       debugPrint('Silent sign in error: $e');
