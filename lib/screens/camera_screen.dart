@@ -171,49 +171,52 @@ class _CameraScreenState extends State<CameraScreen> {
           Positioned.fill(child: CameraPreview(_controller!)),
           Positioned(
             top: 48,
-            left: 16,
-            right: 16,
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                ),
-                const Spacer(),
-                _CounterBadge(title: 'Captured', value: uploads.total.toString()),
-                const SizedBox(width: 8),
-                _CounterBadge(
-                  title: 'Uploaded',
-                  value: uploads.successCount.toString(),
-                  color: const Color(0xFF17381E),
-                  textColor: Colors.greenAccent,
-                ),
-                const SizedBox(width: 8),
-                _CounterBadge(
-                  title: 'Pending',
-                  value: uploads.pendingCount.toString(),
-                  color: const Color(0xFF1B2742),
-                ),
-                const SizedBox(width: 8),
-                TextButton(
-                  onPressed: _submitting ? null : _submitAll,
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
+            left: 12,
+            right: 12,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
                   ),
-                  child: _submitting
-                      ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                      : const Text('Submit'),
-                ),
-              ],
+                  const SizedBox(width: 4),
+                  _CounterBadge(title: 'Captured', value: uploads.total.toString()),
+                  const SizedBox(width: 8),
+                  _CounterBadge(
+                    title: 'Uploaded',
+                    value: uploads.successCount.toString(),
+                    color: const Color(0xFF17381E),
+                    textColor: Colors.greenAccent,
+                  ),
+                  const SizedBox(width: 8),
+                  _CounterBadge(
+                    title: 'Pending',
+                    value: uploads.pendingCount.toString(),
+                    color: const Color(0xFF1B2742),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: _submitting ? null : _submitAll,
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: _submitting
+                        ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                        : const Text('Submit'),
+                  ),
+                ],
+              ),
             ),
           ),
           Positioned(

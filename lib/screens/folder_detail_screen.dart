@@ -106,16 +106,16 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
         title: Text(
           selectionMode ? '${_selectedIds.length} selected' : widget.link.name,
-          style: const TextStyle(color: Colors.white),
         ),
         actions: [
           if (selectionMode)
             IconButton(
               onPressed: _deleteSelected,
-              icon: const Icon(Icons.delete, color: Colors.white),
+              icon: const Icon(Icons.delete),
             )
           else
             PopupMenuButton<String>(
@@ -144,14 +144,14 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
                 Text(
                   '${_files.length} photos',
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: Colors.black,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const Spacer(),
                 IconButton(
                   onPressed: _loadFiles,
-                  icon: const Icon(Icons.refresh, color: Colors.white),
+                  icon: const Icon(Icons.refresh),
                 ),
               ],
             ),
@@ -161,7 +161,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
                 ? const Center(
               child: Text(
                 'No photos in this folder',
-                style: TextStyle(color: Colors.white70),
+                style: TextStyle(color: Colors.black54),
               ),
             )
                 : GridView.builder(
@@ -186,7 +186,10 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => FilePreviewScreen(file: file),
+                          builder: (_) => FilePreviewScreen(
+                            files: _files,
+                            initialIndex: index,
+                          ),
                         ),
                       );
                     }
@@ -202,20 +205,14 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) {
                             return Container(
-                              color: const Color(0xFF1C315A),
-                              child: const Icon(
-                                Icons.image,
-                                color: Colors.white,
-                              ),
+                              color: Colors.grey.shade300,
+                              child: const Icon(Icons.image),
                             );
                           },
                         )
                             : Container(
-                          color: const Color(0xFF1C315A),
-                          child: const Icon(
-                            Icons.image,
-                            color: Colors.white,
-                          ),
+                          color: Colors.grey.shade300,
+                          child: const Icon(Icons.image),
                         ),
                       ),
                       if (selected)
@@ -223,10 +220,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
                           decoration: BoxDecoration(
                             color: Colors.black45,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.white,
-                              width: 2,
-                            ),
+                            border: Border.all(color: Colors.white, width: 2),
                           ),
                           child: const Center(
                             child: Icon(

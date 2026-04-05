@@ -130,7 +130,6 @@ class DriveService {
     }
   }
 
-  /// ⭐ Authenticated full image fetch from Google Drive
   static Future<Uint8List?> getFileBytes(String fileId) async {
     try {
       final client = await _getHttpClient();

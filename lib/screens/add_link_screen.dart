@@ -152,7 +152,7 @@ class _AddLinkScreenState extends State<AddLinkScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add / Create Folder', style: TextStyle(color: Colors.white)),
+        title: const Text('Add / Create Folder'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(18),
@@ -167,7 +167,7 @@ class _AddLinkScreenState extends State<AddLinkScreen> {
                     const Text(
                       'Create Drive Folder',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Colors.black,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                       ),
@@ -175,17 +175,15 @@ class _AddLinkScreenState extends State<AddLinkScreen> {
                     const SizedBox(height: 8),
                     const Text(
                       'Use this for most cases',
-                      style: TextStyle(color: Colors.white60),
+                      style: TextStyle(color: Colors.black54),
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: _createFolderController,
-                      style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
                         hintText: 'Folder name',
-                        hintStyle: const TextStyle(color: Colors.white54),
                         filled: true,
-                        fillColor: const Color(0xFF0D1830),
+                        fillColor: const Color(0xFFF3F3F3),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                           borderSide: BorderSide.none,
@@ -209,17 +207,20 @@ class _AddLinkScreenState extends State<AddLinkScreen> {
                   ListTile(
                     title: const Text(
                       'Add Existing Drive Folder',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     subtitle: const Text(
                       'Rarely used option',
-                      style: TextStyle(color: Colors.white54),
+                      style: TextStyle(color: Colors.black54),
                     ),
                     trailing: Icon(
                       _showExistingSection
                           ? Icons.keyboard_arrow_up
                           : Icons.keyboard_arrow_down,
-                      color: Colors.white,
+                      color: Colors.black,
                     ),
                     onTap: () {
                       setState(() {
@@ -234,12 +235,10 @@ class _AddLinkScreenState extends State<AddLinkScreen> {
                         children: [
                           TextField(
                             controller: _existingNameController,
-                            style: const TextStyle(color: Colors.white),
                             decoration: InputDecoration(
                               hintText: 'Folder display name',
-                              hintStyle: const TextStyle(color: Colors.white54),
                               filled: true,
-                              fillColor: const Color(0xFF0D1830),
+                              fillColor: const Color(0xFFF3F3F3),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide.none,
@@ -250,15 +249,13 @@ class _AddLinkScreenState extends State<AddLinkScreen> {
                           TextField(
                             controller: _existingUrlController,
                             maxLines: 3,
-                            style: const TextStyle(color: Colors.white),
                             decoration: InputDecoration(
                               hintText: 'Paste Drive folder link or raw ID',
-                              hintStyle: const TextStyle(color: Colors.white54),
                               filled: true,
-                              fillColor: const Color(0xFF0D1830),
+                              fillColor: const Color(0xFFF3F3F3),
                               suffixIcon: IconButton(
                                 onPressed: _paste,
-                                icon: const Icon(Icons.paste, color: Colors.white),
+                                icon: const Icon(Icons.paste),
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
@@ -282,7 +279,7 @@ class _AddLinkScreenState extends State<AddLinkScreen> {
                               style: TextStyle(
                                 color: detectedId == null
                                     ? Colors.redAccent
-                                    : Colors.white70,
+                                    : Colors.black54,
                                 fontSize: 12,
                               ),
                             ),
@@ -304,7 +301,7 @@ class _AddLinkScreenState extends State<AddLinkScreen> {
                               padding: EdgeInsets.only(top: 10),
                               child: Text(
                                 'Verified',
-                                style: TextStyle(color: Colors.greenAccent),
+                                style: TextStyle(color: Colors.green),
                               ),
                             ),
                         ],

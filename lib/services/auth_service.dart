@@ -23,14 +23,15 @@ class AuthService {
       'email',
       'https://www.googleapis.com/auth/drive',
     ],
-    serverClientId:
-    AppConfig.webClientId.isEmpty ? null : AppConfig.webClientId,
+    serverClientId: AppConfig.webClientId.isEmpty ? null : AppConfig.webClientId,
   );
 
   static Future<GoogleSignInAccount?> signIn() async {
     try {
       await _googleSignIn.signOut();
-      return await _googleSignIn.signIn();
+      final user = await _googleSignIn.signIn();
+      debugPrint('Signed in user: ${user?.email}');
+      return user;
     } catch (e) {
       debugPrint('Sign in error: $e');
       return null;
@@ -39,7 +40,8 @@ class AuthService {
 
   static Future<GoogleSignInAccount?> silentSignIn() async {
     try {
-      return await _googleSignIn.signInSilently();
+      final user = await _googleSignIn.signInSilently();
+      return user;
     } catch (e) {
       debugPrint('Silent sign in error: $e');
       return null;

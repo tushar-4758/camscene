@@ -78,9 +78,7 @@ class UploadProvider extends ChangeNotifier {
         next.status = UploadItemStatus.success;
         try {
           final file = File(next.path);
-          if (file.existsSync()) {
-            await file.delete();
-          }
+          if (file.existsSync()) await file.delete();
         } catch (_) {}
       } else {
         next.status = UploadItemStatus.failed;
@@ -110,9 +108,7 @@ class UploadProvider extends ChangeNotifier {
     for (final item in _items) {
       try {
         final file = File(item.path);
-        if (file.existsSync()) {
-          file.deleteSync();
-        }
+        if (file.existsSync()) file.deleteSync();
       } catch (_) {}
     }
     _items.clear();

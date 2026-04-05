@@ -30,44 +30,49 @@ class CamSceneApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: 'CamScene',
         theme: ThemeData(
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: const Color(0xFF081120),
-          primaryColor: Colors.white,
-          cardColor: const Color(0xFF10203B),
-          colorScheme: const ColorScheme.dark(
-            primary: Colors.white,
-            secondary: Color(0xFF9BB4E0),
-            surface: Color(0xFF10203B),
+          brightness: Brightness.light,
+          scaffoldBackgroundColor: const Color(0xFFF7F7F7),
+          primaryColor: Colors.black,
+          colorScheme: const ColorScheme.light(
+            primary: Colors.black,
+            secondary: Colors.grey,
+            surface: Colors.white,
           ),
           appBarTheme: const AppBarTheme(
-            backgroundColor: Color(0xFF081120),
+            backgroundColor: Color(0xFFF7F7F7),
             elevation: 0,
             centerTitle: false,
+            iconTheme: IconThemeData(color: Colors.black),
+            titleTextStyle: TextStyle(
+              color: Colors.black,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           cardTheme: CardThemeData(
-            color: const Color(0xFF10203B),
+            color: Colors.white,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(18),
             ),
             margin: EdgeInsets.zero,
           ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF081120),
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
               minimumSize: const Size(double.infinity, 54),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
           ),
           outlinedButtonTheme: OutlinedButtonThemeData(
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: const BorderSide(color: Color(0xFF2A4167)),
+              foregroundColor: Colors.black,
+              side: const BorderSide(color: Color(0xFFDDDDDD)),
               minimumSize: const Size(double.infinity, 54),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
           ),

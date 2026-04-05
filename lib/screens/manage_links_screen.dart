@@ -25,11 +25,11 @@ class _ManageLinksScreenState extends State<ManageLinksScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Drive Folders', style: TextStyle(color: Colors.white)),
+        title: const Text('Drive Folders'),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF081120),
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
         onPressed: () {
           Navigator.push(
             context,
@@ -44,13 +44,11 @@ class _ManageLinksScreenState extends State<ManageLinksScreen> {
           children: [
             TextField(
               onChanged: (v) => setState(() => query = v),
-              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Search folder by name',
-                hintStyle: const TextStyle(color: Colors.white54),
-                prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                prefixIcon: const Icon(Icons.search),
                 filled: true,
-                fillColor: const Color(0xFF10203B),
+                fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(18),
                   borderSide: BorderSide.none,
@@ -63,7 +61,7 @@ class _ManageLinksScreenState extends State<ManageLinksScreen> {
                   ? const Center(
                 child: Text(
                   'No folders found',
-                  style: TextStyle(color: Colors.white70),
+                  style: TextStyle(color: Colors.black54),
                 ),
               )
                   : ListView.separated(
@@ -86,14 +84,12 @@ class _ManageLinksScreenState extends State<ManageLinksScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: link.isSelected
-                            ? const Color(0xFF16315B)
-                            : const Color(0xFF10203B),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(
                           color: link.isSelected
-                              ? Colors.white
-                              : const Color(0xFF1E335A),
+                              ? Colors.black
+                              : const Color(0xFFE2E2E2),
                         ),
                       ),
                       child: Row(
@@ -102,28 +98,30 @@ class _ManageLinksScreenState extends State<ManageLinksScreen> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1C315A),
+                              color: Colors.black,
                               borderRadius: BorderRadius.circular(14),
                             ),
-                            child: const Icon(Icons.folder_rounded, color: Colors.white),
+                            child: const Icon(Icons.folder, color: Colors.white),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               link.name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: Colors.black,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
                               ),
                             ),
                           ),
                           if (link.isVerified)
-                            const Icon(Icons.verified, color: Colors.greenAccent),
+                            const Icon(Icons.verified, color: Colors.green),
                           if (link.isSelected)
                             const Padding(
                               padding: EdgeInsets.only(left: 8),
-                              child: Icon(Icons.check_circle, color: Colors.white),
+                              child: Icon(Icons.check_circle, color: Colors.black),
                             ),
                         ],
                       ),

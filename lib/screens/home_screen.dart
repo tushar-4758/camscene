@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/links_provider.dart';
 import '../providers/upload_provider.dart';
-import 'add_link_screen.dart';
 import 'camera_screen.dart';
 import 'manage_links_screen.dart';
 
@@ -52,16 +51,8 @@ class HomeScreen extends StatelessWidget {
                 photoUrl: auth.photoUrl,
                 onLogout: () => auth.signOut(),
               ),
-              const SizedBox(height: 28),
-              const Text(
-                'Selected Drive Folder',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 24),
+
               if (selected != null)
                 _SelectedFolderCard(
                   name: selected.name,
@@ -69,15 +60,29 @@ class HomeScreen extends StatelessWidget {
                 )
               else
                 const _NoFolderCard(),
+
               const SizedBox(height: 16),
-              if (uploads.hasItems)
-                _UploadStatusCard(
-                  captured: uploads.total,
-                  uploaded: uploads.successCount,
-                  pending: uploads.pendingCount,
-                  failed: uploads.failedCount,
-                ),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatCard(
+                      title: 'Captured',
+                      value: '${uploads.total}',
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _StatCard(
+                      title: 'Uploaded',
+                      value: '${uploads.successCount}',
+                    ),
+                  ),
+                ],
+              ),
+
               const Spacer(),
+
               ElevatedButton.icon(
                 onPressed: selected == null
                     ? null
@@ -86,7 +91,7 @@ class HomeScreen extends StatelessWidget {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                          'Pending uploads exist. Please submit or finish them first.',
+                          'Pending uploads exist. Please finish them first.',
                         ),
                       ),
                     );
@@ -103,7 +108,9 @@ class HomeScreen extends StatelessWidget {
                 icon: const Icon(Icons.camera_alt_rounded),
                 label: const Text('Open Camera'),
               ),
+
               const SizedBox(height: 12),
+
               OutlinedButton.icon(
                 onPressed: () {
                   Navigator.push(
@@ -115,19 +122,6 @@ class HomeScreen extends StatelessWidget {
                 },
                 icon: const Icon(Icons.folder_open_rounded),
                 label: const Text('Manage Drive Links'),
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const AddLinkScreen(),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.create_new_folder_rounded),
-                label: const Text('Add / Create Folder'),
               ),
             ],
           ),
@@ -152,22 +146,42 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        Expanded(
+          child: Row(
             children: [
-              Text(
-                'CamScene',
-                style: TextStyle(
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
                   color: Colors.white,
-                  fontSize: 30,
-                  fontWeight: FontWeight.w700,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.all(6),
+                child: Image.asset(
+                  'assets/logo.png',
+                  fit: BoxFit.contain,
                 ),
               ),
-              SizedBox(height: 4),
-              Text(
-                'Capture and upload smartly',
-                style: TextStyle(color: Colors.white60),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'CamScene',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Capture and upload smartly',
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -176,7 +190,7 @@ class _Header extends StatelessWidget {
           onTap: () {
             showModalBottomSheet(
               context: context,
-              backgroundColor: const Color(0xFF10203B),
+              backgroundColor: Colors.white,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
               ),
@@ -190,16 +204,16 @@ class _Header extends StatelessWidget {
                         radius: 32,
                         backgroundImage:
                         photoUrl != null ? NetworkImage(photoUrl!) : null,
-                        backgroundColor: const Color(0xFF1C315A),
+                        backgroundColor: const Color(0xFFEAEAEA),
                         child: photoUrl == null
-                            ? const Icon(Icons.person, color: Colors.white)
+                            ? const Icon(Icons.person, color: Colors.black)
                             : null,
                       ),
                       const SizedBox(height: 12),
                       Text(
                         email,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: Colors.black,
                           fontWeight: FontWeight.w600,
                         ),
                         textAlign: TextAlign.center,
@@ -222,9 +236,9 @@ class _Header extends StatelessWidget {
           child: CircleAvatar(
             radius: 22,
             backgroundImage: photoUrl != null ? NetworkImage(photoUrl!) : null,
-            backgroundColor: const Color(0xFF1C315A),
+            backgroundColor: const Color(0xFFEAEAEA),
             child: photoUrl == null
-                ? const Icon(Icons.person, color: Colors.white)
+                ? const Icon(Icons.person, color: Colors.black)
                 : null,
           ),
         ),
@@ -253,7 +267,7 @@ class _SelectedFolderCard extends StatelessWidget {
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                color: const Color(0xFF17305A),
+                color: Colors.black,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: const Icon(Icons.folder_rounded, color: Colors.white),
@@ -265,7 +279,7 @@ class _SelectedFolderCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: Colors.black,
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
                 ),
@@ -275,14 +289,14 @@ class _SelectedFolderCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: isVerified
-                    ? const Color(0xFF16381E)
-                    : const Color(0xFF3D1C1C),
+                    ? const Color(0xFFEAF9EE)
+                    : const Color(0xFFFFEEEE),
                 borderRadius: BorderRadius.circular(30),
               ),
               child: Text(
                 isVerified ? 'Verified' : 'Unknown',
                 style: TextStyle(
-                  color: isVerified ? Colors.greenAccent : Colors.redAccent,
+                  color: isVerified ? Colors.green : Colors.red,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
@@ -305,12 +319,12 @@ class _NoFolderCard extends StatelessWidget {
         padding: const EdgeInsets.all(18),
         child: Row(
           children: const [
-            Icon(Icons.folder_off_rounded, color: Colors.white70),
+            Icon(Icons.folder_off_rounded, color: Colors.black54),
             SizedBox(width: 12),
             Expanded(
               child: Text(
                 'No folder selected',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: Colors.black),
               ),
             ),
           ],
@@ -320,28 +334,40 @@ class _NoFolderCard extends StatelessWidget {
   }
 }
 
-class _UploadStatusCard extends StatelessWidget {
-  final int captured;
-  final int uploaded;
-  final int pending;
-  final int failed;
+class _StatCard extends StatelessWidget {
+  final String title;
+  final String value;
 
-  const _UploadStatusCard({
-    required this.captured,
-    required this.uploaded,
-    required this.pending,
-    required this.failed,
+  const _StatCard({
+    required this.title,
+    required this.value,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: const Color(0xFF0D1A30),
       child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Text(
-          'Captured: $captured • Uploaded: $uploaded • Pending: $pending • Failed: $failed',
-          style: const TextStyle(color: Colors.white),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.black54,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );
