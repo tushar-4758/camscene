@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -80,6 +81,16 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {
+                    context.read<UploadProvider>().resetAll();
+                  },
+                  child: const Text("Refresh"),
+                ),
+              ),
+
 
               const Spacer(),
 
@@ -236,9 +247,9 @@ class _Header extends StatelessWidget {
           child: CircleAvatar(
             radius: 22,
             backgroundImage: photoUrl != null ? NetworkImage(photoUrl!) : null,
-            backgroundColor: const Color(0xFFEAEAEA),
+            backgroundColor: const Color(0xFF000000),
             child: photoUrl == null
-                ? const Icon(Icons.person, color: Colors.black)
+                ? const Icon(CupertinoIcons.person_circle ,color: Colors.white)
                 : null,
           ),
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
+import '../providers/links_provider.dart';
 import '../models/drive_file_item.dart';
 import '../models/drive_link.dart';
 import '../services/drive_service.dart';
@@ -96,11 +97,23 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(ok ? 'Folder deleted' : 'Failed to delete folder')),
-    );
+    if (ok) {
+      // remove from app cache/local saved folders
+      await context.read<LinksProvider>().deleteLink(widget.link.id);
 
-    if (ok) Navigator.pop(context);
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Folder deleted successfully')),
+      );
+
+      // go back to previous screen
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to delete folder')),
+      );
+    }
   }
 
   @override

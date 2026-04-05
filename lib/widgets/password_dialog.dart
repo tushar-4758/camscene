@@ -8,7 +8,7 @@ Future<bool> showPasswordDialog(BuildContext context) async {
   await showDialog(
     context: context,
     builder: (_) => AlertDialog(
-      backgroundColor: const Color(0xFF10203B),
+      backgroundColor: const Color(0xFF000000),
       title: const Text('Enter Password', style: TextStyle(color: Colors.white)),
       content: TextField(
         controller: controller,
@@ -16,8 +16,8 @@ Future<bool> showPasswordDialog(BuildContext context) async {
         obscureText: true,
         style: const TextStyle(color: Colors.white),
         decoration: const InputDecoration(
-          hintText: 'Password',
-          hintStyle: TextStyle(color: Colors.white54),
+          hintText: 'Fill Password',
+          hintStyle: TextStyle(color: Colors.white),
         ),
       ),
       actions: [
