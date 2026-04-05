@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
+import '../config/app_config.dart';
+
 class _AuthClient extends http.BaseClient {
   final Map<String, String> _headers;
   final http.Client _inner = http.Client();
@@ -21,15 +23,14 @@ class AuthService {
       'email',
       'https://www.googleapis.com/auth/drive',
     ],
-    serverClientId: '222021084955-e2g5lqfq8hvq1vo8vli1sgqg453rlkfj.apps.googleusercontent.com',
+    serverClientId:
+    AppConfig.webClientId.isEmpty ? null : AppConfig.webClientId,
   );
 
   static Future<GoogleSignInAccount?> signIn() async {
     try {
       await _googleSignIn.signOut();
-      final user = await _googleSignIn.signIn();
-      debugPrint('Signed in user: ${user?.email}');
-      return user;
+      return await _googleSignIn.signIn();
     } catch (e) {
       debugPrint('Sign in error: $e');
       return null;
@@ -38,8 +39,7 @@ class AuthService {
 
   static Future<GoogleSignInAccount?> silentSignIn() async {
     try {
-      final user = await _googleSignIn.signInSilently();
-      return user;
+      return await _googleSignIn.signInSilently();
     } catch (e) {
       debugPrint('Silent sign in error: $e');
       return null;

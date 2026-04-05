@@ -2,15 +2,13 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 
+import '../models/drive_file_item.dart';
 import 'auth_service.dart';
 
 class DriveService {
   static Future<drive.DriveApi?> _getApi() async {
     final client = await AuthService.getAuthClient();
-    if (client == null) {
-      debugPrint('Drive client is null');
-      return null;
-    }
+    if (client == null) return null;
     return drive.DriveApi(client);
   }
 
@@ -18,7 +16,6 @@ class DriveService {
     try {
       final api = await _getApi();
       if (api == null) return false;
-
       final file = await api.files.get(folderId) as drive.File;
       return file.mimeType == 'application/vnd.google-apps.folder';
     } catch (e) {
@@ -64,15 +61,63 @@ class DriveService {
         ..parents = [folderId];
 
       final media = drive.Media(file.openRead(), file.lengthSync());
-
-      final result = await api.files.create(
-        driveFile,
-        uploadMedia: media,
-      );
-
+      final result = await api.files.create(driveFile, uploadMedia: media);
       return result.id != null;
     } catch (e) {
       debugPrint('uploadFile error: $e');
+      return false;
+    }
+  }
+
+  static Future<List<DriveFileItem>> listFilesInFolder(String folderId) async {
+    try {
+      final api = await _getApi();
+      if (api == null) return [];
+
+      final response = await api.files.list(
+        q: "'$folderId' in parents and trashed = false",
+        $fields: 'files(id,name,thumbnailLink,webContentLink,mimeType)',
+        orderBy: 'createdTime desc',
+      );
+
+      return (response.files ?? [])
+          .map(
+            (f) => DriveFileItem(
+          id: f.id ?? '',
+          name: f.name ?? '',
+          thumbnailLink: f.thumbnailLink,
+          webContentLink: f.webContentLink,
+          mimeType: f.mimeType,
+        ),
+      )
+          .where((e) => e.id.isNotEmpty)
+          .toList();
+    } catch (e) {
+      debugPrint('listFilesInFolder error: $e');
+      return [];
+    }
+  }
+
+  static Future<bool> deleteFile(String fileId) async {
+    try {
+      final api = await _getApi();
+      if (api == null) return false;
+      await api.files.delete(fileId);
+      return true;
+    } catch (e) {
+      debugPrint('deleteFile error: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> deleteFolder(String folderId) async {
+    try {
+      final api = await _getApi();
+      if (api == null) return false;
+      await api.files.delete(folderId);
+      return true;
+    } catch (e) {
+      debugPrint('deleteFolder error: $e');
       return false;
     }
   }

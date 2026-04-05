@@ -6,6 +6,7 @@ import '../providers/links_provider.dart';
 import '../providers/upload_provider.dart';
 import 'add_link_screen.dart';
 import 'camera_screen.dart';
+import 'folder_detail_screen.dart';
 import 'manage_links_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -19,41 +20,20 @@ class HomeScreen extends StatelessWidget {
 
     if (auth.isLoading) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
     if (!auth.isSignedIn) {
       return Scaffold(
-        body: SafeArea(
+        backgroundColor: const Color(0xFFF7F7F8),
+        body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                const Spacer(),
-                const Icon(Icons.camera_alt_rounded, size: 90, color: Colors.white),
-                const SizedBox(height: 18),
-                const Text(
-                  'CamScene',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 34,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Capture. Queue. Upload.',
-                  style: TextStyle(color: Color(0xFFB8B8B8), fontSize: 15),
-                ),
-                const Spacer(),
-                ElevatedButton.icon(
-                  onPressed: () => auth.signIn(),
-                  icon: const Icon(Icons.login),
-                  label: const Text('Sign in with Google'),
-                ),
-                const SizedBox(height: 12),
-              ],
+            child: ElevatedButton.icon(
+              onPressed: () => auth.signIn(),
+              icon: const Icon(Icons.login),
+              label: const Text('Sign in with Google'),
             ),
           ),
         ),
@@ -63,9 +43,10 @@ class HomeScreen extends StatelessWidget {
     final selectedLink = links.activeLink;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F6),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 26),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -74,32 +55,29 @@ class HomeScreen extends StatelessWidget {
                 photoUrl: auth.photoUrl,
                 onLogout: () => auth.signOut(),
               ),
-              const SizedBox(height: 24),
-              const Text(
-                'Active Destination',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              const SizedBox(height: 20),
+              _SectionTitle('Active Destination'),
               const SizedBox(height: 10),
+
               if (selectedLink != null)
                 _ActiveFolderCard(
                   name: selectedLink.name,
-                  folderId: selectedLink.folderId,
                   isVerified: selectedLink.isVerified,
                 )
               else
                 const _NoFolderCard(),
-              const SizedBox(height: 18),
+
+              const SizedBox(height: 14),
+
               if (uploads.hasItems)
                 _PendingStatusCard(
                   total: uploads.total,
                   success: uploads.successCount,
                   failed: uploads.failedCount,
                 ),
-              const SizedBox(height: 18),
+
+              const SizedBox(height: 14),
+
               ElevatedButton.icon(
                 onPressed: selectedLink == null
                     ? null
@@ -125,7 +103,9 @@ class HomeScreen extends StatelessWidget {
                 icon: const Icon(Icons.camera_alt_rounded),
                 label: const Text('Open Camera'),
               ),
-              const SizedBox(height: 14),
+
+              const SizedBox(height: 12),
+
               OutlinedButton.icon(
                 onPressed: () {
                   Navigator.push(
@@ -136,13 +116,15 @@ class HomeScreen extends StatelessWidget {
                 icon: const Icon(Icons.add_link_rounded),
                 label: const Text('Add or Create Folder'),
               ),
-              const SizedBox(height: 16),
+
+              const SizedBox(height: 14),
+
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF121214),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: const Color(0xFF232327)),
+                    border: Border.all(color: const Color(0xFFE4E4E7)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,9 +134,9 @@ class HomeScreen extends StatelessWidget {
                         child: Text(
                           'Saved Drive Folders',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Colors.black87,
                             fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
@@ -163,7 +145,7 @@ class HomeScreen extends StatelessWidget {
                             ? const Center(
                           child: Text(
                             'No folder added yet',
-                            style: TextStyle(color: Color(0xFF909090)),
+                            style: TextStyle(color: Colors.black45),
                           ),
                         )
                             : ListView.separated(
@@ -174,11 +156,17 @@ class HomeScreen extends StatelessWidget {
                             final link = links.links[index];
                             return _FolderCard(
                               name: link.name,
-                              folderId: link.folderId,
                               isSelected: link.isSelected,
                               isVerified: link.isVerified,
-                              onTap: () => links.selectLink(link.id),
-                              onDelete: () => links.deleteLink(link.id),
+                              onTap: () {
+                                links.selectLink(link.id);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => FolderDetailScreen(link: link),
+                                  ),
+                                );
+                              },
                             );
                           },
                         ),
@@ -187,19 +175,18 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ManageLinksScreen()),
-                    );
-                  },
-                  icon: const Icon(Icons.folder_open_rounded),
-                  label: const Text('Manage Drive Links'),
-                ),
+
+              const SizedBox(height: 14),
+
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ManageLinksScreen()),
+                  );
+                },
+                icon: const Icon(Icons.folder_open_rounded),
+                label: const Text('Manage Drive Links'),
               ),
             ],
           ),
@@ -231,15 +218,15 @@ class _TopHeader extends StatelessWidget {
               Text(
                 'CamScene',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Colors.black87,
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               SizedBox(height: 4),
               Text(
-                'Smart rolling upload workflow',
-                style: TextStyle(color: Color(0xFF9D9D9D), fontSize: 13),
+                'Capture, queue and upload',
+                style: TextStyle(color: Colors.black54, fontSize: 13),
               ),
             ],
           ),
@@ -248,7 +235,7 @@ class _TopHeader extends StatelessWidget {
           onTap: () {
             showModalBottomSheet(
               context: context,
-              backgroundColor: const Color(0xFF1B1B1D),
+              backgroundColor: Colors.white,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
@@ -260,18 +247,17 @@ class _TopHeader extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 32,
-                        backgroundColor: const Color(0xFF2C2C30),
-                        backgroundImage:
-                        photoUrl != null ? NetworkImage(photoUrl!) : null,
+                        backgroundColor: const Color(0xFFEDEDED),
+                        backgroundImage: photoUrl != null ? NetworkImage(photoUrl!) : null,
                         child: photoUrl == null
-                            ? const Icon(Icons.person, color: Colors.white)
+                            ? const Icon(Icons.person, color: Colors.black87)
                             : null,
                       ),
                       const SizedBox(height: 12),
                       Text(
                         email,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: Colors.black87,
                           fontWeight: FontWeight.w600,
                         ),
                         textAlign: TextAlign.center,
@@ -293,10 +279,10 @@ class _TopHeader extends StatelessWidget {
           },
           child: CircleAvatar(
             radius: 22,
-            backgroundColor: const Color(0xFF2A2A2E),
+            backgroundColor: const Color(0xFFE8E8E8),
             backgroundImage: photoUrl != null ? NetworkImage(photoUrl!) : null,
             child: photoUrl == null
-                ? const Icon(Icons.person, color: Colors.white)
+                ? const Icon(Icons.person, color: Colors.black87)
                 : null,
           ),
         ),
@@ -305,20 +291,36 @@ class _TopHeader extends StatelessWidget {
   }
 }
 
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  const _SectionTitle(this.title);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: const TextStyle(
+        color: Colors.black87,
+        fontSize: 15,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+}
+
 class _ActiveFolderCard extends StatelessWidget {
   final String name;
-  final String folderId;
   final bool isVerified;
 
   const _ActiveFolderCard({
     required this.name,
-    required this.folderId,
     required this.isVerified,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -327,75 +329,35 @@ class _ActiveFolderCard extends StatelessWidget {
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                color: const Color(0xFF2A2A2E),
+                color: const Color(0xFFF1F1F1),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(Icons.folder_rounded, color: Colors.white),
+              child: const Icon(Icons.folder_rounded, color: Colors.black87),
             ),
             const SizedBox(width: 14),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    folderId,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFFA5A5A5),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
+              child: Text(
+                name,
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF203320),
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-                  child: const Text(
-                    'Active',
-                    style: TextStyle(
-                      color: Color(0xFF7CFF87),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: isVerified ? const Color(0xFFE7F8EA) : const Color(0xFFFFEEEE),
+                borderRadius: BorderRadius.circular(40),
+              ),
+              child: Text(
+                isVerified ? 'Verified' : 'Unknown',
+                style: TextStyle(
+                  color: isVerified ? const Color(0xFF1E8E3E) : const Color(0xFFB3261E),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: isVerified
-                        ? const Color(0xFF203320)
-                        : const Color(0xFF332020),
-                    borderRadius: BorderRadius.circular(40),
-                  ),
-                  child: Text(
-                    isVerified ? 'Verified' : 'Unknown',
-                    style: TextStyle(
-                      color: isVerified
-                          ? const Color(0xFF7CFF87)
-                          : const Color(0xFFFF8A8A),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             )
           ],
         ),
@@ -409,35 +371,18 @@ class _NoFolderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return const Card(
+      color: Colors.white,
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: EdgeInsets.all(18),
         child: Row(
           children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: const Color(0xFF2A2A2E),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(Icons.folder_off_rounded, color: Colors.white),
-            ),
-            const SizedBox(width: 14),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'No folder selected',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Add and select a Drive folder to continue',
-                    style: TextStyle(color: Color(0xFFA0A0A0), fontSize: 12),
-                  ),
-                ],
+            Icon(Icons.folder_off_rounded, color: Colors.black54),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'No folder selected',
+                style: TextStyle(color: Colors.black87),
               ),
             ),
           ],
@@ -462,19 +407,12 @@ class _PendingStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final pending = total - success - failed;
     return Card(
+      color: Colors.white,
       child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            const Icon(Icons.cloud_upload_rounded, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Captured: $total  •  Uploaded: $success  •  Pending: $pending  •  Failed: $failed',
-                style: const TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
+        padding: const EdgeInsets.all(14),
+        child: Text(
+          'Captured: $total • Uploaded: $success • Pending: $pending • Failed: $failed',
+          style: const TextStyle(color: Colors.black87),
         ),
       ),
     );
@@ -483,19 +421,15 @@ class _PendingStatusCard extends StatelessWidget {
 
 class _FolderCard extends StatelessWidget {
   final String name;
-  final String folderId;
   final bool isSelected;
   final bool isVerified;
   final VoidCallback onTap;
-  final VoidCallback onDelete;
 
   const _FolderCard({
     required this.name,
-    required this.folderId,
     required this.isSelected,
     required this.isVerified,
     required this.onTap,
-    required this.onDelete,
   });
 
   @override
@@ -506,11 +440,10 @@ class _FolderCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF24262A) : const Color(0xFF18181B),
+          color: isSelected ? const Color(0xFFF4F4F5) : Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isSelected ? Colors.white : const Color(0xFF2B2B30),
-            width: isSelected ? 1.2 : 1,
+            color: isSelected ? Colors.black54 : const Color(0xFFE4E4E7),
           ),
         ),
         child: Row(
@@ -519,75 +452,41 @@ class _FolderCard extends StatelessWidget {
               width: 46,
               height: 46,
               decoration: BoxDecoration(
-                color: isSelected ? Colors.white : const Color(0xFF2A2A2E),
+                color: const Color(0xFFF1F1F1),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(
-                Icons.folder_rounded,
-                color: isSelected ? Colors.black : Colors.white,
-              ),
+              child: const Icon(Icons.folder_rounded, color: Colors.black87),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: isVerified
-                              ? const Color(0xFF203320)
-                              : const Color(0xFF332020),
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: Text(
-                          isVerified ? 'Verified' : 'Unknown',
-                          style: TextStyle(
-                            color: isVerified
-                                ? const Color(0xFF7CFF87)
-                                : const Color(0xFFFF8A8A),
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    folderId,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFF9E9E9E),
-                      fontSize: 11.5,
-                    ),
-                  ),
-                ],
+              child: Text(
+                name,
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: isVerified ? const Color(0xFFE7F8EA) : const Color(0xFFFFEEEE),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: Text(
+                isVerified ? 'Verified' : 'Unknown',
+                style: TextStyle(
+                  color: isVerified ? const Color(0xFF1E8E3E) : const Color(0xFFB3261E),
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             if (isSelected)
               const Padding(
-                padding: EdgeInsets.only(left: 6),
-                child: Icon(Icons.check_circle, color: Color(0xFF79FF8B)),
+                padding: EdgeInsets.only(left: 8),
+                child: Icon(Icons.check_circle, color: Colors.green),
               ),
-            const SizedBox(width: 6),
-            IconButton(
-              onPressed: onDelete,
-              icon: const Icon(Icons.delete_outline, color: Color(0xFFB8B8B8)),
-            ),
           ],
         ),
       ),

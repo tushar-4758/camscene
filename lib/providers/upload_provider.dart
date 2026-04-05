@@ -60,35 +60,29 @@ class UploadProvider extends ChangeNotifier {
         .toList();
 
     if (pending.length < 5) return;
-
     await _uploadBatch(pending, folderId);
   }
 
   Future<void> submitAll(String folderId) async {
-    if (_isUploadingBatch) return;
-
     while (true) {
+      if (_isUploadingBatch) return;
+
       final pending = _items
           .where((e) => e.status == UploadItemStatus.pending)
           .take(5)
           .toList();
 
       if (pending.isEmpty) break;
-
       await _uploadBatch(pending, folderId);
     }
   }
 
   Future<void> retryFailed(String folderId) async {
-    final failed = _items
-        .where((e) => e.status == UploadItemStatus.failed)
-        .toList();
-
+    final failed = _items.where((e) => e.status == UploadItemStatus.failed).toList();
     for (final item in failed) {
       item.status = UploadItemStatus.pending;
     }
     notifyListeners();
-
     await submitAll(folderId);
   }
 
@@ -109,9 +103,7 @@ class UploadProvider extends ChangeNotifier {
         item.status = UploadItemStatus.success;
         try {
           final file = File(item.path);
-          if (file.existsSync()) {
-            await file.delete();
-          }
+          if (file.existsSync()) await file.delete();
         } catch (_) {}
       } else {
         item.status = UploadItemStatus.failed;
@@ -132,9 +124,7 @@ class UploadProvider extends ChangeNotifier {
     for (final item in _items) {
       try {
         final file = File(item.path);
-        if (file.existsSync()) {
-          file.deleteSync();
-        }
+        if (file.existsSync()) file.deleteSync();
       } catch (_) {}
     }
     _items.clear();

@@ -112,12 +112,7 @@ class ManageLinksScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (link.isSelected)
-                    const Icon(Icons.check_circle, color: Color(0xFF79FF8B)),
-                  IconButton(
-                    onPressed: () => provider.deleteLink(link.id),
-                    icon: const Icon(Icons.delete_outline, color: Colors.white70),
-                  ),
+
                 ],
               ),
             ),
