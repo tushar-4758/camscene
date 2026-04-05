@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
-
 import '../models/drive_link.dart';
+import '../services/drive_service.dart';
 
 class LinksProvider extends ChangeNotifier {
   final List<DriveLink> _links = [];
@@ -30,6 +30,33 @@ class LinksProvider extends ChangeNotifier {
       _links.clear();
       _links.addAll(DriveLink.decodeList(data));
       notifyListeners();
+    }
+  }
+  Future<void> syncDriveFolders() async {
+    try {
+      final folders = await DriveService.listFolders();
+
+      for (final f in folders) {
+        final exists = _links.any((e) => e.folderId == f.id);
+
+        if (!exists) {
+          _links.add(
+            DriveLink(
+              id: _uuid.v4(),
+              name: f.name ?? 'Unnamed Folder',
+              url: f.id!,
+              folderId: f.id!,
+              isSelected: _links.isEmpty,
+              isVerified: true,
+            ),
+          );
+        }
+      }
+
+      await _save();
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Drive sync error: $e");
     }
   }
 

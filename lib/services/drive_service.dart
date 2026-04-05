@@ -64,7 +64,9 @@ class DriveService {
       if (!file.existsSync()) return false;
 
       final driveFile = drive.File()
-        ..name = fileName ?? 'IMG_${DateTime.now().millisecondsSinceEpoch}.jpg'
+        ..name = fileName ?? 'IMG_${DateTime
+            .now()
+            .millisecondsSinceEpoch}.jpg'
         ..parents = [folderId];
 
       final media = drive.Media(file.openRead(), file.lengthSync());
@@ -90,13 +92,14 @@ class DriveService {
 
       return (response.files ?? [])
           .map(
-            (f) => DriveFileItem(
-          id: f.id ?? '',
-          name: f.name ?? '',
-          thumbnailLink: f.thumbnailLink,
-          webContentLink: f.webContentLink,
-          mimeType: f.mimeType,
-        ),
+            (f) =>
+            DriveFileItem(
+              id: f.id ?? '',
+              name: f.name ?? '',
+              thumbnailLink: f.thumbnailLink,
+              webContentLink: f.webContentLink,
+              mimeType: f.mimeType,
+            ),
       )
           .where((e) => e.id.isNotEmpty)
           .toList();
@@ -150,6 +153,25 @@ class DriveService {
     } catch (e) {
       debugPrint('getFileBytes error: $e');
       return null;
+    }
+  }
+
+  static Future<List<drive.File>> listFolders() async {
+    try {
+      final api = await _getApi();
+      if (api == null) return [];
+
+      final response = await api.files.list(
+        q: "mimeType='application/vnd.google-apps.folder' and trashed=false",
+        $fields: "files(id,name)",
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
+      );
+
+      return response.files ?? [];
+    } catch (e) {
+      debugPrint("listFolders error: $e");
+      return [];
     }
   }
 }

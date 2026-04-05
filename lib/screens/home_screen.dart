@@ -122,7 +122,10 @@ class HomeScreen extends StatelessWidget {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () => confirmReset(context),
+                  onPressed: () async {
+                    context.read<UploadProvider>().resetAll();
+                    await context.read<LinksProvider>().syncDriveFolders();
+                  },
                   child: const Text('Refresh'),
                 ),
               ),
