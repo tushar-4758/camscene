@@ -21,6 +21,7 @@ class _CameraScreenState extends State<CameraScreen> {
   bool _capturing = false;
   bool _submitting = false;
   int _cameraIndex = 0;
+  FlashMode _flashMode = FlashMode.off;
 
   @override
   void initState() {
@@ -38,6 +39,7 @@ class _CameraScreenState extends State<CameraScreen> {
     );
 
     await _controller!.initialize();
+    await _controller!.setFlashMode(_flashMode);
     if (mounted) setState(() {});
   }
 
@@ -48,6 +50,13 @@ class _CameraScreenState extends State<CameraScreen> {
     await _initCamera();
   }
 
+  Future<void> _toggleFlash() async {
+    if (_controller == null) return;
+    _flashMode = _flashMode == FlashMode.off ? FlashMode.always : FlashMode.off;
+    await _controller!.setFlashMode(_flashMode);
+    setState(() {});
+  }
+
   Future<void> _capturePhoto() async {
     final uploads = context.read<UploadProvider>();
     final folderId = context.read<LinksProvider>().activeLink?.folderId;
@@ -56,27 +65,6 @@ class _CameraScreenState extends State<CameraScreen> {
         !_controller!.value.isInitialized ||
         _capturing ||
         folderId == null) {
-      return;
-    }
-
-    if (uploads.pendingCount >= 15) {
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          backgroundColor: const Color(0xFF1B1B1D),
-          title: const Text('Please wait', style: TextStyle(color: Colors.white)),
-          content: Text(
-            'Your last ${uploads.pendingCount} photos are not uploaded yet. Please wait a few seconds before capturing more.',
-            style: const TextStyle(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
       return;
     }
 
@@ -97,8 +85,7 @@ class _CameraScreenState extends State<CameraScreen> {
       } catch (_) {}
 
       uploads.addCapturedPhoto(file.path);
-
-      await uploads.triggerRollingUpload(folderId);
+      uploads.processQueue(folderId);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -115,6 +102,7 @@ class _CameraScreenState extends State<CameraScreen> {
     if (folderId == null) return;
 
     final uploads = context.read<UploadProvider>();
+
     if (!uploads.hasItems) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No photos captured')),
@@ -123,42 +111,40 @@ class _CameraScreenState extends State<CameraScreen> {
     }
 
     setState(() => _submitting = true);
-    await uploads.submitAll(folderId);
+
+    await uploads.processQueue(folderId);
+
+    if (uploads.failedCount > 0) {
+      await uploads.retryFailed(folderId);
+    }
 
     if (mounted) {
       setState(() => _submitting = false);
 
-      final failed = uploads.failedCount;
-      final success = uploads.successCount;
       final total = uploads.total;
+      final uploaded = uploads.successCount;
+      final failed = uploads.failedCount;
+      final pending = uploads.pendingCount;
 
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          backgroundColor: const Color(0xFF1B1B1D),
+          backgroundColor: const Color(0xFF10203B),
           title: const Text('Upload Summary', style: TextStyle(color: Colors.white)),
           content: Text(
-            'Captured: $total\nUploaded: $success\nFailed: $failed',
+            'Captured: $total\nUploaded: $uploaded\nPending: $pending\nFailed: $failed',
             style: const TextStyle(color: Colors.white70),
           ),
           actions: [
-            if (failed > 0)
-              TextButton(
-                onPressed: () async {
-                  Navigator.pop(context);
-                  await uploads.retryFailed(folderId);
-                },
-                child: const Text('Retry Failed'),
-              ),
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                if (failed == 0) {
+                if (failed == 0 && pending == 0) {
                   uploads.clearCompleted();
                   Navigator.pop(context);
                 }
               },
-              child: Text(failed == 0 ? 'Done' : 'Close'),
+              child: const Text('Done'),
             ),
           ],
         ),
@@ -182,12 +168,9 @@ class _CameraScreenState extends State<CameraScreen> {
           ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : Stack(
         children: [
-          Positioned.fill(
-            child: CameraPreview(_controller!),
-          ),
-
+          Positioned.fill(child: CameraPreview(_controller!)),
           Positioned(
-            top: 50,
+            top: 48,
             left: 16,
             right: 16,
             child: Row(
@@ -197,19 +180,21 @@ class _CameraScreenState extends State<CameraScreen> {
                   icon: const Icon(Icons.arrow_back, color: Colors.white),
                 ),
                 const Spacer(),
-                _TopBadge(
-                  label: '${uploads.total}',
-                  title: 'Captured',
-                  bg: const Color(0xAA2A2A2E),
-                ),
-                const SizedBox(width: 10),
-                _TopBadge(
-                  label: '${uploads.successCount}',
+                _CounterBadge(title: 'Captured', value: uploads.total.toString()),
+                const SizedBox(width: 8),
+                _CounterBadge(
                   title: 'Uploaded',
-                  bg: const Color(0xAA17351A),
-                  textColor: const Color(0xFF79FF8B),
+                  value: uploads.successCount.toString(),
+                  color: const Color(0xFF17381E),
+                  textColor: Colors.greenAccent,
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
+                _CounterBadge(
+                  title: 'Pending',
+                  value: uploads.pendingCount.toString(),
+                  color: const Color(0xFF1B2742),
+                ),
+                const SizedBox(width: 8),
                 TextButton(
                   onPressed: _submitting ? null : _submitAll,
                   style: TextButton.styleFrom(
@@ -217,7 +202,7 @@ class _CameraScreenState extends State<CameraScreen> {
                     foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   child: _submitting
@@ -226,78 +211,50 @@ class _CameraScreenState extends State<CameraScreen> {
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                      : const Text(
-                    'Submit',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
+                      : const Text('Submit'),
                 ),
               ],
             ),
           ),
-
-          if (uploads.pendingCount > 0)
-            Positioned(
-              top: 118,
-              right: 16,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                decoration: BoxDecoration(
-                  color: const Color(0xAA2A2A2E),
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: Text(
-                  'Pending ${uploads.pendingCount}',
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ),
-            ),
-
           Positioned(
-            bottom: 40,
+            bottom: 36,
             left: 0,
             right: 0,
-            child: Column(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                if (uploads.pendingCount >= 10)
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.black87,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Text(
-                      'Please wait... pending uploads: ${uploads.pendingCount}',
-                      style: const TextStyle(color: Colors.white),
-                    ),
+                IconButton(
+                  onPressed: _toggleFlash,
+                  icon: Icon(
+                    _flashMode == FlashMode.off
+                        ? Icons.flash_off
+                        : Icons.flash_on,
+                    color: Colors.white,
+                    size: 30,
                   ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    IconButton(
-                      onPressed: _switchCamera,
-                      icon: const Icon(Icons.flip_camera_android, color: Colors.white, size: 30),
+                ),
+                GestureDetector(
+                  onTap: _capturing ? null : _capturePhoto,
+                  child: Container(
+                    width: 84,
+                    height: 84,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 4),
                     ),
-                    GestureDetector(
-                      onTap: _capturing ? null : _capturePhoto,
-                      child: Container(
-                        width: 82,
-                        height: 82,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 4),
-                        ),
-                        child: Container(
-                          margin: const EdgeInsets.all(5),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _capturing ? Colors.grey : Colors.white,
-                          ),
-                        ),
+                    child: Container(
+                      margin: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _capturing ? Colors.grey : Colors.white,
                       ),
                     ),
-                    const SizedBox(width: 40),
-                  ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: _switchCamera,
+                  icon: const Icon(Icons.flip_camera_android,
+                      color: Colors.white, size: 30),
                 ),
               ],
             ),
@@ -308,35 +265,35 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 }
 
-class _TopBadge extends StatelessWidget {
-  final String label;
+class _CounterBadge extends StatelessWidget {
   final String title;
-  final Color bg;
+  final String value;
+  final Color color;
   final Color textColor;
 
-  const _TopBadge({
-    required this.label,
+  const _CounterBadge({
     required this.title,
-    required this.bg,
+    required this.value,
+    this.color = const Color(0xAA10203B),
     this.textColor = Colors.white,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(18),
+        color: color,
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
         children: [
           Text(
-            label,
+            value,
             style: TextStyle(
               color: textColor,
               fontWeight: FontWeight.w700,
-              fontSize: 16,
+              fontSize: 15,
             ),
           ),
           Text(

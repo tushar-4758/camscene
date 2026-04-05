@@ -51,9 +51,8 @@ class DriveLink {
     isVerified: json['isVerified'] ?? false,
   );
 
-  static String encodeList(List<DriveLink> links) {
-    return jsonEncode(links.map((e) => e.toJson()).toList());
-  }
+  static String encodeList(List<DriveLink> links) =>
+      jsonEncode(links.map((e) => e.toJson()).toList());
 
   static List<DriveLink> decodeList(String data) {
     final list = jsonDecode(data) as List;

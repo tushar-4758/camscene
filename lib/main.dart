@@ -31,19 +31,21 @@ class CamSceneApp extends StatelessWidget {
         title: 'CamScene',
         theme: ThemeData(
           brightness: Brightness.dark,
-          scaffoldBackgroundColor: const Color(0xFF0F0F10),
+          scaffoldBackgroundColor: const Color(0xFF081120),
+          primaryColor: Colors.white,
+          cardColor: const Color(0xFF10203B),
           colorScheme: const ColorScheme.dark(
             primary: Colors.white,
-            secondary: Color(0xFFB0B0B0),
-            surface: Color(0xFF1B1B1D),
+            secondary: Color(0xFF9BB4E0),
+            surface: Color(0xFF10203B),
           ),
           appBarTheme: const AppBarTheme(
-            backgroundColor: Color(0xFF0F0F10),
+            backgroundColor: Color(0xFF081120),
             elevation: 0,
             centerTitle: false,
           ),
           cardTheme: CardThemeData(
-            color: const Color(0xFF1B1B1D),
+            color: const Color(0xFF10203B),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -52,7 +54,7 @@ class CamSceneApp extends StatelessWidget {
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
+              foregroundColor: const Color(0xFF081120),
               minimumSize: const Size(double.infinity, 54),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
@@ -62,7 +64,7 @@ class CamSceneApp extends StatelessWidget {
           outlinedButtonTheme: OutlinedButtonThemeData(
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.white,
-              side: const BorderSide(color: Color(0xFF3A3A3D)),
+              side: const BorderSide(color: Color(0xFF2A4167)),
               minimumSize: const Size(double.infinity, 54),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),

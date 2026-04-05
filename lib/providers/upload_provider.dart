@@ -18,7 +18,7 @@ class UploadItem {
 
 class UploadProvider extends ChangeNotifier {
   final List<UploadItem> _items = [];
-  bool _isUploadingBatch = false;
+  bool _isUploading = false;
 
   List<UploadItem> get items => List.unmodifiable(_items);
 
@@ -28,12 +28,12 @@ class UploadProvider extends ChangeNotifier {
   int get failedCount =>
       _items.where((e) => e.status == UploadItemStatus.failed).length;
   int get pendingCount =>
-      _items.where((e) => e.status == UploadItemStatus.pending).length;
-  int get uploadingCount =>
-      _items.where((e) => e.status == UploadItemStatus.uploading).length;
+      _items.where((e) =>
+      e.status == UploadItemStatus.pending ||
+          e.status == UploadItemStatus.uploading).length;
 
   bool get hasItems => _items.isNotEmpty;
-  bool get isUploading => _isUploadingBatch;
+  bool get isUploading => _isUploading;
 
   bool get hasUnfinished =>
       _items.any((e) =>
@@ -51,68 +51,54 @@ class UploadProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> triggerRollingUpload(String folderId) async {
-    if (_isUploadingBatch) return;
+  Future<void> processQueue(String folderId) async {
+    if (_isUploading) return;
+    _isUploading = true;
+    notifyListeners();
 
-    final pending = _items
-        .where((e) => e.status == UploadItemStatus.pending)
-        .take(5)
-        .toList();
-
-    if (pending.length < 5) return;
-    await _uploadBatch(pending, folderId);
-  }
-
-  Future<void> submitAll(String folderId) async {
     while (true) {
-      if (_isUploadingBatch) return;
+      UploadItem? next;
+      try {
+        next = _items.firstWhere((e) => e.status == UploadItemStatus.pending);
+      } catch (_) {
+        next = null;
+      }
 
-      final pending = _items
-          .where((e) => e.status == UploadItemStatus.pending)
-          .take(5)
-          .toList();
+      if (next == null) break;
 
-      if (pending.isEmpty) break;
-      await _uploadBatch(pending, folderId);
-    }
-  }
+      next.status = UploadItemStatus.uploading;
+      notifyListeners();
 
-  Future<void> retryFailed(String folderId) async {
-    final failed = _items.where((e) => e.status == UploadItemStatus.failed).toList();
-    for (final item in failed) {
-      item.status = UploadItemStatus.pending;
-    }
-    notifyListeners();
-    await submitAll(folderId);
-  }
-
-  Future<void> _uploadBatch(List<UploadItem> batch, String folderId) async {
-    _isUploadingBatch = true;
-    for (final item in batch) {
-      item.status = UploadItemStatus.uploading;
-    }
-    notifyListeners();
-
-    for (final item in batch) {
       final ok = await DriveService.uploadFile(
-        filePath: item.path,
+        filePath: next.path,
         folderId: folderId,
       );
 
       if (ok) {
-        item.status = UploadItemStatus.success;
+        next.status = UploadItemStatus.success;
         try {
-          final file = File(item.path);
-          if (file.existsSync()) await file.delete();
+          final file = File(next.path);
+          if (file.existsSync()) {
+            await file.delete();
+          }
         } catch (_) {}
       } else {
-        item.status = UploadItemStatus.failed;
+        next.status = UploadItemStatus.failed;
       }
+
       notifyListeners();
     }
 
-    _isUploadingBatch = false;
+    _isUploading = false;
     notifyListeners();
+  }
+
+  Future<void> retryFailed(String folderId) async {
+    for (final item in _items.where((e) => e.status == UploadItemStatus.failed)) {
+      item.status = UploadItemStatus.pending;
+    }
+    notifyListeners();
+    await processQueue(folderId);
   }
 
   void clearCompleted() {
@@ -124,11 +110,13 @@ class UploadProvider extends ChangeNotifier {
     for (final item in _items) {
       try {
         final file = File(item.path);
-        if (file.existsSync()) file.deleteSync();
+        if (file.existsSync()) {
+          file.deleteSync();
+        }
       } catch (_) {}
     }
     _items.clear();
-    _isUploadingBatch = false;
+    _isUploading = false;
     notifyListeners();
   }
 }

@@ -1,6 +1,9 @@
 import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
+import 'package:http/http.dart' as http;
 
 import '../models/drive_file_item.dart';
 import 'auth_service.dart';
@@ -10,6 +13,10 @@ class DriveService {
     final client = await AuthService.getAuthClient();
     if (client == null) return null;
     return drive.DriveApi(client);
+  }
+
+  static Future<http.Client?> _getHttpClient() async {
+    return await AuthService.getAuthClient();
   }
 
   static Future<bool> verifyFolder(String folderId) async {
@@ -76,7 +83,8 @@ class DriveService {
 
       final response = await api.files.list(
         q: "'$folderId' in parents and trashed = false",
-        $fields: 'files(id,name,thumbnailLink,webContentLink,mimeType)',
+        $fields:
+        'files(id,name,thumbnailLink,webContentLink,mimeType,imageMediaMetadata)',
         orderBy: 'createdTime desc',
       );
 
@@ -119,6 +127,30 @@ class DriveService {
     } catch (e) {
       debugPrint('deleteFolder error: $e');
       return false;
+    }
+  }
+
+  /// ⭐ Authenticated full image fetch from Google Drive
+  static Future<Uint8List?> getFileBytes(String fileId) async {
+    try {
+      final client = await _getHttpClient();
+      if (client == null) return null;
+
+      final url = Uri.parse(
+        'https://www.googleapis.com/drive/v3/files/$fileId?alt=media',
+      );
+
+      final response = await client.get(url);
+
+      if (response.statusCode == 200) {
+        return response.bodyBytes;
+      } else {
+        debugPrint('getFileBytes failed: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('getFileBytes error: $e');
+      return null;
     }
   }
 }
