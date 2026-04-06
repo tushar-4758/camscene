@@ -16,7 +16,7 @@ Future<void> main() async {
 }
 
 class CamSceneApp extends StatelessWidget {
-  const CamSceneApp({super.key});
+  const ({super.key});
 
   @override
   Widget build(BuildContext context) {
