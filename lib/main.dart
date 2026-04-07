@@ -28,7 +28,7 @@ class CamSceneApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'CamScene',
+        title: 'Camscene',
         theme: ThemeData(
           brightness: Brightness.light,
           scaffoldBackgroundColor: const Color(0xFFF7F7F7),
